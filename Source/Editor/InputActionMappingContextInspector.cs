@@ -3,6 +3,7 @@ using Godot;
 
 namespace neuneuPlugin.addons.InputMappingSystem.Source.Editor;
 
+/// XXX button is not added in the Inspector
 [Tool]
 public partial class InputActionMappingContextInspector : EditorInspectorPlugin
 {
