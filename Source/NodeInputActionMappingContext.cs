@@ -13,9 +13,10 @@ public partial class NodeInputActionMappingContext : Node
     private Dictionary<StringName, InputActionMapping> _mapping;
     private Array<StringName> _activeMapping;
 
+    [Export] private Array<InputActionMapping> mapping_list;
+
     
     /// <summary> All registered InputActionMappings by their names. </summary>
-    [Export]
     public Dictionary<StringName, InputActionMapping> Mapping
     {
         get => _mapping;
@@ -30,16 +31,20 @@ public partial class NodeInputActionMappingContext : Node
     }
 
     /// <summary> Rebuilds the mapping dictionary to ensure proper key assignment. </summary>
-    void Rebuild()
+    void Build()
     {
-        var mv = Mapping.Values;
         Mapping.Clear();
-        foreach (var elem in mv)
+        for (int i = 0; i < mapping_list.Count; i++)
         {
-            Mapping.Add(elem.MappingName, elem);
+            var am = mapping_list[i];
+            if(am==null){GD.PrintErr($"mapping[{i}] is null");continue;}
+            if(am.MappingName.IsEmpty){GD.PrintErr($"mapping[{i}] name is not set");return;}
+            am.Build();
+            Mapping.Add(am.MappingName, am);
         }
-        
     }
+    
+    
     
     public NodeInputActionMappingContext() : base()
     {
@@ -69,8 +74,10 @@ public partial class NodeInputActionMappingContext : Node
         if(!ActiveMapping.Contains(mappingName) && Mapping.ContainsKey(mappingName))
         {
             ActiveMapping.Add(mappingName);
+            GD.Print($"Activate  mapping '{mappingName}'");
             return true;
         }
+        GD.PrintErr($"mapping [{mappingName}] not found");
         return false;
     }
     /// <summary> Deactivates a mapping by removing it from the active list. </summary>
@@ -84,7 +91,7 @@ public partial class NodeInputActionMappingContext : Node
     public override void _EnterTree()
     {
         base._EnterTree();
-        Rebuild();
+        Build();
     }
     
     /// <summary>
@@ -97,9 +104,14 @@ public partial class NodeInputActionMappingContext : Node
         if (@event.IsEcho()) return;
         foreach (var am in ActiveMapping)
         {
-            foreach (var ni in Mapping[am].GetNamedInputActionsByEvent(@event))
+            InputActionMapping iam;
+            if (Mapping.TryGetValue(am, out iam))
             {
-                EmitSignalOnActionTriggered(Mapping[am],ni,Time.GetTicksMsec()/1000f);
+                var nias =iam.GetBuiltMappingActions(@event);
+                foreach (var nia in nias)
+                {
+                    EmitSignalOnActionTriggered(iam,nia,Time.GetTicksMsec()/1000f);
+                }
             }
         }
     }

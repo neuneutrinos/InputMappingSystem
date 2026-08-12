@@ -1,4 +1,5 @@
 ﻿using Godot;
+using Godot.Collections;
 
 namespace neuneuPlugin.addons.InputMappingSystem.Source;
 
@@ -7,7 +8,7 @@ namespace neuneuPlugin.addons.InputMappingSystem.Source;
 /// Used to define custom input mappings that can be compared against input events.
 /// </summary>
 [GlobalClass]
-public partial class NamedInputAction : Resource
+public partial class NamedInputAction : NamedInputResource
 {
     
     private InputEvent _evt;
@@ -65,7 +66,11 @@ public partial class NamedInputAction : Resource
         _actionName = other!._actionName;
     }
 
-    
+    public override Array<NamedInputAction> GetNamedActions()
+    {
+        return [this];
+    }
+
     /// <summary> Checks if this action's event matches the given input event. </summary>
     public bool IsSameEvent(InputEvent evt)
     {
